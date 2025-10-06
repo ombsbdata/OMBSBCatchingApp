@@ -149,7 +149,8 @@ with report_tab:
                      f"<br>Pitch Type: {row.get('TaggedPitchType','')}" +
                      f"<br>Batter: {row.get('Batter','')}" +
                      f"<br>BatterSide: {row.get('BatterSide','')}"+
-                     f"<br>ProbStrikeCalled: {row.get('ProbStrikeCalled','')}"
+                     f"<br>ProbStrikeCalled: {round(row.get('ProbStrikeCalled', 0), 3):.3f}"
+
             ))
 
         # Strike zone grid
