@@ -73,8 +73,12 @@ report_tab, leaderboard_tab = st.tabs(["Report", "Leaderboard"])
 
 with report_tab:
     # Sidebar-like controls (inside Report tab)
-    catcher_options = df_fawley['Catcher'].dropna().unique()
-    selected_catcher = st.selectbox("Select a Catcher:", catcher_options)
+    catcher_options = sorted(df_fawley['Catcher'].dropna().unique().tolist())
+    selected_catchers = st.multiselect(
+        "Select catcher(s):",
+        options=catcher_options,
+        default=catcher_options[:1]  # pre-select the first one so charts render
+    )
 
     date_options = pd.to_datetime(df_fawley['Date']).dropna().unique()
     date_range = st.date_input(
@@ -97,7 +101,14 @@ with report_tab:
     selected_pitch_category = st.selectbox("Select a Pitch Type Category:", options=pitch_categories.keys())
 
     # Filter data based on selections
-    filtered_fawley = df_fawley[df_fawley['Catcher'] == selected_catcher].copy()
+    if selected_catchers:
+        filtered_fawley = df_fawley[df_fawley['Catcher'].isin(selected_catchers)].copy()
+    else:
+        # If nothing selected, keep an empty frame so the app doesn't crash
+        filtered_fawley = df_fawley.iloc[0:0].copy()
+    # (optional) a label to use in titles/subheaders
+    catcher_label = ", ".join(selected_catchers) if selected_catchers else "—"
+
     filtered_fawley = filtered_fawley[
         (pd.to_datetime(filtered_fawley['Date']) >= pd.Timestamp(date_range[0])) &
         (pd.to_datetime(filtered_fawley['Date']) <= pd.Timestamp(date_range[1]))
@@ -245,7 +256,11 @@ with report_tab:
     fig3 = create_zone_scatter(f"All Pitches (Strike%: {strike_percentage_all:.1f}%)", all_pitches_df)
     fig4 = create_zone_scatter(f"Shadow Zone Pitches (Strike%: {strike_percentage_shadow:.1f}%)", shadow_pitches_df)
 
-    st.write(f"### {selected_catcher} Framing Breakdown:")
+
+    
+    # --- with ---
+    st.write(f"### {catcher_label} Framing Breakdown:")
+
     col1, col2 = st.columns(2)
     col3, col4 = st.columns(2)
     col1.plotly_chart(fig1, use_container_width=True)
@@ -305,7 +320,7 @@ with report_tab:
     st.table(framing_table)
 
     st.write("### Called Strike Rate Contour Map")
-    csr_kde_fig = plot_called_strike_kde(all_pitches_df, f"CSR Contour: {selected_catcher}")
+    csr_kde_fig = plot_called_strike_kde(all_pitches_df, f"CSR Contour: {catcher_label}")
     st.plotly_chart(csr_kde_fig, use_container_width=True)
 
 with leaderboard_tab:
