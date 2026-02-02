@@ -42,14 +42,14 @@ fawley_csv_path = "Fall_2025_wRV_with_stuff.csv"
 
 columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
                   'Catcher', 'PitchCall', 'TaggedPitchType',
-                  'PlateLocSide', 'PlateLocHeight', 'Date']
+                  'PlateLocSide', 'PlateLocHeight', 'Date', 'game_type']
 
 rebs_columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
                        'Catcher', 'PitchCall', 'TaggedPitchType',
                        'PlateLocSide', 'PlateLocHeight', 'Date',
                        'Inning', 'Balls', 'Strikes', 'PitcherTeam',
                        # If present, we’ll use this for CSAA:
-                       'ProbStrikeCalled']
+                       'ProbStrikeCalled', 'game_type']
 
 df_sec = pd.read_csv(sec_csv_path, usecols=columns_needed)
 df_fawley = pd.read_csv(fawley_csv_path, usecols=[c for c in rebs_columns_needed if c in pd.read_csv(fawley_csv_path, nrows=0).columns])
