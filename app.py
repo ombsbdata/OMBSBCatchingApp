@@ -37,7 +37,7 @@ pitch_marker_map = {
 # =========================
 # Data
 # =========================
-sec_csv_path = "SEC_Pitching_pbp_cleaned_for_catchers.csv"
+sec_csv_path = "Fall_2025_wRV_with_stuff.csv"
 fawley_csv_path = "Fall_2025_wRV_with_stuff.csv"
 
 columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
