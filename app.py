@@ -59,7 +59,7 @@ df_sec = df_sec[df_sec['PitchCall'].isin(['StrikeCalled', 'BallCalled'])]
 df_fawley = df_fawley[df_fawley['PitchCall'].isin(['StrikeCalled', 'BallCalled'])]
 
 df_sec = df_sec[df_sec['game_type'].isin(['IS','FallGame','REG'])]
-df_fawley = df_fawley[df_sec['game_type'].isin(['IS','FallGame','REG'])]
+df_fawley = df_fawley[df_fawley['game_type'].isin(['IS','FallGame','REG'])]
 
 
 # Dates → datetime
