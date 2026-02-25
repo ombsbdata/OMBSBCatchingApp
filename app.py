@@ -104,6 +104,22 @@ with report_tab:
     }
     selected_pitch_category = st.selectbox("Select a Pitch Type Category:", options=pitch_categories.keys())
 
+        # --- Pitch Call filter (display labels) ---
+    pitch_call_display_options = [
+        "Strike",
+        "Ball",
+        "Zone",
+        "Out of Zone",
+        "Ball Called Strike",
+        "Strike Called Ball"
+    ]
+    
+    selected_pitch_call_filters = st.multiselect(
+        "Filter Pitch Call:",
+        options=pitch_call_display_options,
+        default=pitch_call_display_options
+    )
+
     # Filter data based on selections
     if selected_catchers:
         filtered_fawley = df_fawley[df_fawley['Catcher'].isin(selected_catchers)].copy()
@@ -124,6 +140,39 @@ with report_tab:
     if selected_pitch_category:
         valid_pitch_types = pitch_categories[selected_pitch_category]
         filtered_fawley = filtered_fawley[filtered_fawley['TaggedPitchType'].isin(valid_pitch_types)]
+
+        # --- Apply Pitch Call filter ---
+    # Build a boolean mask from the chosen display options
+    mask = pd.Series(False, index=filtered_fawley.index)
+    
+    in_rulebook = (
+        (filtered_fawley["PlateLocSide"] >= rulebook_left) &
+        (filtered_fawley["PlateLocSide"] <= rulebook_right) &
+        (filtered_fawley["PlateLocHeight"] >= rulebook_bottom) &
+        (filtered_fawley["PlateLocHeight"] <= rulebook_top)
+    )
+    
+    out_rulebook = ~in_rulebook
+    
+    if "Strike" in selected_pitch_call_filters:
+        mask |= (filtered_fawley["PitchCall"] == "StrikeCalled")
+    
+    if "Ball" in selected_pitch_call_filters:
+        mask |= (filtered_fawley["PitchCall"] == "BallCalled")
+    
+    if "Zone" in selected_pitch_call_filters:
+        mask |= in_rulebook
+    
+    if "Out of Zone" in selected_pitch_call_filters:
+        mask |= out_rulebook
+    
+    if "Ball Called Strike" in selected_pitch_call_filters:
+        mask |= (out_rulebook & (filtered_fawley["PitchCall"] == "StrikeCalled"))
+    
+    if "Strike Called Ball" in selected_pitch_call_filters:
+        mask |= (in_rulebook & (filtered_fawley["PitchCall"] == "BallCalled"))
+    
+    filtered_fawley = filtered_fawley[mask].copy()
 
     # Derived subsets
     strike_pitches_df = filtered_fawley[filtered_fawley["PitchCall"] == "StrikeCalled"]
