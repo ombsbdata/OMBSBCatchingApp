@@ -48,7 +48,7 @@ rebs_columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
                        'Catcher', 'PitchCall', 'TaggedPitchType',
                        'PlateLocSide', 'PlateLocHeight', 'Date',
                        'Inning', 'Balls', 'Strikes', 'PitcherTeam',
-                       # If present, we’ll use this for CSAA:
+                       'BatterTeam', 'GameUID', 'game_num',
                        'ProbStrikeCalled', 'game_type']
 
 df_sec = pd.read_csv(sec_csv_path, usecols=columns_needed)
@@ -84,11 +84,55 @@ with report_tab:
         default=catcher_options[:1]  # pre-select the first one so charts render
     )
 
-    date_options = pd.to_datetime(df_fawley['Date']).dropna().unique()
-    date_range = st.date_input(
-        "Select Date Range:",
-        [date_options.min(), date_options.max()]
-    )
+    # --- Game selector: single game OR date range ---
+    date_mode = st.radio("Filter by:", ["Pick a Game", "Date Range"], horizontal=True)
+
+    if date_mode == "Pick a Game":
+        # Build game options from Reg games only, labeled "Game X vs OPPONENT (Date)"
+        has_game_num = "game_num" in df_fawley.columns and df_fawley["game_num"].notna().any()
+        has_uid      = "GameUID" in df_fawley.columns
+
+        if has_game_num:
+            id_cols = ["Date", "game_num"]
+            if has_uid:
+                id_cols.append("GameUID")
+            if "BatterTeam" in df_fawley.columns:
+                id_cols.append("BatterTeam")
+
+            reg_games = (
+                df_fawley[df_fawley["game_num"].notna()]
+                .drop_duplicates(subset=(["GameUID"] if has_uid else ["Date"]))
+                [id_cols]
+                .sort_values("game_num")
+            )
+
+            game_label_map = {}
+            for _, row in reg_games.iterrows():
+                opp   = row["BatterTeam"] if "BatterTeam" in row.index else "OPP"
+                label = f"Game {int(row['game_num'])} vs {opp} ({pd.Timestamp(row['Date']).strftime('%Y-%m-%d')})"
+                uid   = row["GameUID"] if has_uid else None
+                game_label_map[label] = (pd.Timestamp(row["Date"]), uid)
+
+            game_labels = list(game_label_map.keys())
+        else:
+            game_label_map = {}
+            game_labels    = []
+
+        if game_labels:
+            selected_game_label = st.selectbox("Select a Game:", options=game_labels, index=len(game_labels) - 1)
+            selected_game_date, selected_game_uid = game_label_map[selected_game_label]
+        else:
+            st.warning("No Reg-season games with game_num found in data.")
+            selected_game_label = None
+            selected_game_date  = None
+            selected_game_uid   = None
+
+    else:  # Date Range
+        date_options = pd.to_datetime(df_fawley['Date']).dropna().unique()
+        date_range = st.date_input(
+            "Select Date Range:",
+            [date_options.min(), date_options.max()]
+        )
 
     batter_side_options = ["All"] + df_fawley['BatterSide'].dropna().unique().tolist()
     selected_batter_side = st.selectbox("Select Batter Side:", batter_side_options)
@@ -129,10 +173,20 @@ with report_tab:
     # (optional) a label to use in titles/subheaders
     catcher_label = ", ".join(selected_catchers) if selected_catchers else "—"
 
-    filtered_fawley = filtered_fawley[
-        (pd.to_datetime(filtered_fawley['Date']) >= pd.Timestamp(date_range[0])) &
-        (pd.to_datetime(filtered_fawley['Date']) <= pd.Timestamp(date_range[1]))
-    ]
+    if date_mode == "Pick a Game":
+        if selected_game_date is not None:
+            filtered_fawley = filtered_fawley[
+                pd.to_datetime(filtered_fawley['Date']).dt.normalize() == selected_game_date.normalize()
+            ]
+            if selected_game_uid is not None and "GameUID" in filtered_fawley.columns:
+                filtered_fawley = filtered_fawley[filtered_fawley["GameUID"] == selected_game_uid]
+        else:
+            filtered_fawley = filtered_fawley.iloc[0:0]  # empty — no valid game selected
+    else:
+        filtered_fawley = filtered_fawley[
+            (pd.to_datetime(filtered_fawley['Date']) >= pd.Timestamp(date_range[0])) &
+            (pd.to_datetime(filtered_fawley['Date']) <= pd.Timestamp(date_range[1]))
+        ]
     if selected_batter_side != "All":
         filtered_fawley = filtered_fawley[filtered_fawley['BatterSide'] == selected_batter_side]
     if selected_pitcher_throws != "All":
