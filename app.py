@@ -378,43 +378,39 @@ with report_tab:
     # ===== Framing Performance table (with CSAA) =====
     def calculate_framing_metrics(df_):
         rows = []
-
+    
+        # --- Define zone masks up front (scoped to this function) ---
+        in_rulebook_mask = (
+            (df_['PlateLocSide'] >= rulebook_left) & (df_['PlateLocSide'] <= rulebook_right) &
+            (df_['PlateLocHeight'] >= rulebook_bottom) & (df_['PlateLocHeight'] <= rulebook_top)
+        )
+        in_shadow_mask = (
+            (df_['PlateLocSide'] >= shadow_left) & (df_['PlateLocSide'] <= shadow_right) &
+            (df_['PlateLocHeight'] >= shadow_bottom) & (df_['PlateLocHeight'] <= shadow_top)
+        )
+        in_fifty_mask = in_shadow_mask & ~in_rulebook_mask
+        outside_shadow_mask = ~in_shadow_mask
+    
         # Balls Called Strikes (outside rulebook but called strike)
-        bcs = df_[(((df_['PlateLocSide'] < rulebook_left) | (df_['PlateLocSide'] > rulebook_right)) |
-                   ((df_['PlateLocHeight'] < rulebook_bottom) | (df_['PlateLocHeight'] > rulebook_top))) &
-                  (df_['PitchCall'] == 'StrikeCalled')].shape[0]
-
+        bcs = df_[~in_rulebook_mask & (df_['PitchCall'] == 'StrikeCalled')].shape[0]
+    
         # Strikes Called Balls (inside rulebook but called ball)
-        scb = df_[((df_['PlateLocSide'] >= rulebook_left) & (df_['PlateLocSide'] <= rulebook_right) &
-                   (df_['PlateLocHeight'] >= rulebook_bottom) & (df_['PlateLocHeight'] <= rulebook_top) &
-                   (df_['PitchCall'] == 'BallCalled'))].shape[0]
-
+        scb = df_[in_rulebook_mask & (df_['PitchCall'] == 'BallCalled')].shape[0]
+    
         # 50/50 zone
-        fifty = df_[(((df_['PlateLocSide'] >= shadow_left) & (df_['PlateLocSide'] <= shadow_right)) &
-                      ((df_['PlateLocHeight'] >= shadow_bottom) & (df_['PlateLocHeight'] <= shadow_top))) &
-                    ~(((df_['PlateLocSide'] >= rulebook_left) & (df_['PlateLocSide'] <= rulebook_right)) &
-                      ((df_['PlateLocHeight'] >= rulebook_bottom) & (df_['PlateLocHeight'] <= rulebook_top)))]
+        fifty = df_[in_fifty_mask]
         fifty_total = len(fifty)
         fifty_strikes = fifty[fifty['PitchCall'] == 'StrikeCalled'].shape[0]
         fifty_display = f"{fifty_strikes} / {fifty_total}"
-
-        in_fifty_mask = in_shadow_mask & ~in_rulebook_mask
-        outside_shadow_mask = ~in_shadow_mask
-        # ---- NEW: Balls Called Strikes outside 50/50 (truly egregious) ----
-        bcs_outside_fifty = df_[
-            outside_shadow_mask & (df_['PitchCall'] == 'StrikeCalled')
-        ].shape[0]
     
-        # ---- NEW: Balls Called inside 50/50 zone (missed framing opps) ----
-        balls_in_fifty = df_[
-            in_fifty_mask & (df_['PitchCall'] == 'BallCalled')
-        ].shape[0]
+        bcs_outside_fifty = df_[outside_shadow_mask & (df_['PitchCall'] == 'StrikeCalled')].shape[0]
+        balls_in_fifty = df_[in_fifty_mask & (df_['PitchCall'] == 'BallCalled')].shape[0]
     
         rows.append(["Balls Called Strikes", bcs])
         rows.append(["Strikes Called Balls", scb])
         rows.append(["50/50 Pitches", fifty_display])
-        rows.append(["Strikes Called Outside 50/50", bcs_outside_fifty])   # NEW
-        rows.append(["Balls Called Inside 50/50", balls_in_fifty])  
+        rows.append(["Strikes Called Outside 50/50", bcs_outside_fifty])
+        rows.append(["Balls Called Inside 50/50", balls_in_fifty])
         # ---- CSAA & CSAA/100 (called pitches only) ----
         if "ProbStrikeCalled" in df_.columns:
             called = df_[df_["PitchCall"].isin(["BallCalled", "StrikeCalled"])].copy()
