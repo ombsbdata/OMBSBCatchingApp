@@ -397,6 +397,9 @@ with report_tab:
         fifty_total = len(fifty)
         fifty_strikes = fifty[fifty['PitchCall'] == 'StrikeCalled'].shape[0]
         fifty_display = f"{fifty_strikes} / {fifty_total}"
+
+        in_fifty_mask = in_shadow_mask & ~in_rulebook_mask
+        outside_shadow_mask = ~in_shadow_mask
         # ---- NEW: Balls Called Strikes outside 50/50 (truly egregious) ----
         bcs_outside_fifty = df_[
             outside_shadow_mask & (df_['PitchCall'] == 'StrikeCalled')
