@@ -397,11 +397,21 @@ with report_tab:
         fifty_total = len(fifty)
         fifty_strikes = fifty[fifty['PitchCall'] == 'StrikeCalled'].shape[0]
         fifty_display = f"{fifty_strikes} / {fifty_total}"
-
+        # ---- NEW: Balls Called Strikes outside 50/50 (truly egregious) ----
+        bcs_outside_fifty = df_[
+            outside_shadow_mask & (df_['PitchCall'] == 'StrikeCalled')
+        ].shape[0]
+    
+        # ---- NEW: Balls Called inside 50/50 zone (missed framing opps) ----
+        balls_in_fifty = df_[
+            in_fifty_mask & (df_['PitchCall'] == 'BallCalled')
+        ].shape[0]
+    
         rows.append(["Balls Called Strikes", bcs])
         rows.append(["Strikes Called Balls", scb])
         rows.append(["50/50 Pitches", fifty_display])
-
+        rows.append(["Strikes Called Outside 50/50", bcs_outside_fifty])   # NEW
+        rows.append(["Balls Called Inside 50/50", balls_in_fifty])  
         # ---- CSAA & CSAA/100 (called pitches only) ----
         if "ProbStrikeCalled" in df_.columns:
             called = df_[df_["PitchCall"].isin(["BallCalled", "StrikeCalled"])].copy()
