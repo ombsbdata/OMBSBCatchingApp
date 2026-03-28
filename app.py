@@ -37,8 +37,8 @@ pitch_marker_map = {
 # =========================
 # Data
 # =========================
-df_sec = _raw[[c for c in columns_needed if c in _raw.columns]].copy()
-df_fawley = _raw[[c for c in rebs_columns_needed if c in _raw.columns]].copy()
+import gdown
+import tempfile
 
 columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
                   'Catcher', 'PitchCall', 'TaggedPitchType',
@@ -50,26 +50,6 @@ rebs_columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
                        'Inning', 'Balls', 'Strikes', 'PitcherTeam',
                        'BatterTeam', 'GameUID', 'game_num',
                        'ProbStrikeCalled', 'game_type']
-
-
-import gdown
-import tempfile
-
-GDRIVE_FILE_ID = "1GdMWrFcn02NV8r2eN8evIHPzdhE42D9Y"
-
-@st.cache_data(ttl=3600)
-def load_raw_data():
-    url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
-    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-        gdown.download(url, tmp.name, quiet=True)
-        return pd.read_csv(tmp.name, low_memory=False)
-
-_raw = load_raw_data()
-
-
-
-import gdown
-import tempfile
 
 GDRIVE_FILE_ID = "1GdMWrFcn02NV8r2eN8evIHPzdhE42D9Y"
 
