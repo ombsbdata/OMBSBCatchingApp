@@ -37,6 +37,21 @@ pitch_marker_map = {
 # =========================
 # Data
 # =========================
+df_sec = _raw[[c for c in columns_needed if c in _raw.columns]].copy()
+df_fawley = _raw[[c for c in rebs_columns_needed if c in _raw.columns]].copy()
+
+columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
+                  'Catcher', 'PitchCall', 'TaggedPitchType',
+                  'PlateLocSide', 'PlateLocHeight', 'Date', 'game_type']
+
+rebs_columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
+                       'Catcher', 'PitchCall', 'TaggedPitchType',
+                       'PlateLocSide', 'PlateLocHeight', 'Date',
+                       'Inning', 'Balls', 'Strikes', 'PitcherTeam',
+                       'BatterTeam', 'GameUID', 'game_num',
+                       'ProbStrikeCalled', 'game_type']
+
+
 import gdown
 import tempfile
 
@@ -51,19 +66,7 @@ def load_raw_data():
 
 _raw = load_raw_data()
 
-df_sec = _raw[[c for c in columns_needed if c in _raw.columns]].copy()
-df_fawley = _raw[[c for c in rebs_columns_needed if c in _raw.columns]].copy()
 
-columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
-                  'Catcher', 'PitchCall', 'TaggedPitchType',
-                  'PlateLocSide', 'PlateLocHeight', 'Date', 'game_type']
-
-rebs_columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
-                       'Catcher', 'PitchCall', 'TaggedPitchType',
-                       'PlateLocSide', 'PlateLocHeight', 'Date',
-                       'Inning', 'Balls', 'Strikes', 'PitcherTeam',
-                       'BatterTeam', 'GameUID', 'game_num',
-                       'ProbStrikeCalled', 'game_type']
 
 import gdown
 import tempfile
