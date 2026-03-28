@@ -37,8 +37,22 @@ pitch_marker_map = {
 # =========================
 # Data
 # =========================
-sec_csv_path = "Fall_2025_wRV_with_stuff.csv"
-fawley_csv_path = "Fall_2025_wRV_with_stuff.csv"
+import gdown
+import tempfile
+
+GDRIVE_FILE_ID = "1GdMWrFcn02NV8r2eN8evIHPzdhE42D9Y"
+
+@st.cache_data(ttl=3600)
+def load_raw_data():
+    url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+        gdown.download(url, tmp.name, quiet=True)
+        return pd.read_csv(tmp.name, low_memory=False)
+
+_raw = load_raw_data()
+
+df_sec = _raw[[c for c in columns_needed if c in _raw.columns]].copy()
+df_fawley = _raw[[c for c in rebs_columns_needed if c in _raw.columns]].copy()
 
 columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
                   'Catcher', 'PitchCall', 'TaggedPitchType',
@@ -51,8 +65,22 @@ rebs_columns_needed = ['Batter', 'BatterSide', 'Pitcher', 'PitcherThrows',
                        'BatterTeam', 'GameUID', 'game_num',
                        'ProbStrikeCalled', 'game_type']
 
-df_sec = pd.read_csv(sec_csv_path, usecols=columns_needed)
-df_fawley = pd.read_csv(fawley_csv_path, usecols=[c for c in rebs_columns_needed if c in pd.read_csv(fawley_csv_path, nrows=0).columns])
+import gdown
+import tempfile
+
+GDRIVE_FILE_ID = "1GdMWrFcn02NV8r2eN8evIHPzdhE42D9Y"
+
+@st.cache_data(ttl=3600)
+def load_raw_data():
+    url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+        gdown.download(url, tmp.name, quiet=True)
+        return pd.read_csv(tmp.name, low_memory=False)
+
+_raw = load_raw_data()
+
+df_sec = _raw[[c for c in columns_needed if c in _raw.columns]].copy()
+df_fawley = _raw[[c for c in rebs_columns_needed if c in _raw.columns]].copy()
 
 # Keep only called pitches for framing context
 df_sec = df_sec[df_sec['PitchCall'].isin(['StrikeCalled', 'BallCalled'])]
